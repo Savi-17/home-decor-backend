@@ -1,5 +1,7 @@
 import db from "../config/db.js";
 import { v4 as uuidv4 } from "uuid";
+import bcrypt from "bcryptjs";
+import { generateToken } from "../utils/jwt.js";
 
 export const registerUser = async (req, res) => {
   try {
@@ -8,6 +10,7 @@ export const registerUser = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({ message: "Email already exists" });
     }
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const [id] = await db("customers").insert({
       uuid: uuidv4(),
@@ -16,7 +19,7 @@ export const registerUser = async (req, res) => {
       gender,
       dob,
       email,
-      password,
+      password: hashedPassword,
       contact,
       pincode,
     });
@@ -30,13 +33,27 @@ export const registerUser = async (req, res) => {
 export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.query;
-    const user = await db("customers").where({ email, password }).first();
+    const user = await db("customers").where({ email }).first();
 
     if (!user) {
       return res.status(401).json({ message: "Invalid email or password" });
     }
+     const isMatch = await bcrypt.compare(password, user.password);
+     if (!isMatch) {
+      return res.status(401).json({ message: "Invalid email or password" });
+     }
+     const token = generateToken({ id: user.id, uuid: user.uuid, email: user.email });
 
-    res.json({ message: "Login successful", user });
+     res.json({
+      message: "Login successful",
+      token,
+      user: {
+        id: user.id,
+        uuid: user.uuid,
+        name: user.name,
+        email: user.email,
+      },
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -49,14 +66,14 @@ export const listUsers = async (req, res) => {
     limit = parseInt(limit);
     const offset = (page - 1) * limit;
 
-    let query = db("customers").select("*");
+    let basequery = db("customers");
 
     if (search) {
-      query = query.where("name", "like", `%${search}%`).orWhere("email", "like", `%${search}%`);
+      basequery = basequery.where("name", "like", `%${search}%`).orWhere("email", "like", `%${search}%`);
     }
 
-    const totalUsers = await query.clone().count("* as count").first();
-    const users = await query.offset(offset).limit(limit);
+    const totalUsers = await basequery.clone().count("* as count").first();
+    const users = await basequery.offset(offset).limit(limit);
 
     res.json({
       total: totalUsers.count,

@@ -34,7 +34,7 @@ export const listCategories = async (req, res) => {
 
 export const createCategory = async (req, res) => {
   try {
-    const { name, title, image, parent_category } = req.body;
+    const { name, title, parent_category } = req.body;
 
     if (!name) {
       return res
@@ -45,12 +45,21 @@ export const createCategory = async (req, res) => {
     const uuid = uuidv4();
     const slug = slugify(name, { lower: true, strict: true });
 
+    let imageValue = null;
+    if (req.files && req.files.length > 0) {
+      imageValue = JSON.stringify(
+        req.files.map((file) => "/uploads/" + file.filename)
+      );
+    } else if (req.file) {
+      imageValue = JSON.stringify(["/uploads/" + req.file.filename]);
+    }
+
     const [newCategoryId] = await db("category").insert({
       uuid,
       name,
       slug,
       title,
-      image: image || "",
+      image: imageValue,
       parent_category,
     });
 
@@ -58,7 +67,8 @@ export const createCategory = async (req, res) => {
       success: true,
       message: "Category created successfully",
       id: newCategoryId,
-      uuid
+      uuid,
+      image: imageValue,
     });
   } catch (error) {
     console.error("Error creating category:", error);
@@ -68,7 +78,7 @@ export const createCategory = async (req, res) => {
 
 export const getCategoryById = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id } = req.query;
     const category = await db("category").where({ id }).first();
 
     if (!category) {
@@ -85,8 +95,8 @@ export const getCategoryById = async (req, res) => {
 
 export const updateCategory = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { name, title, image, parent_category } = req.body;
+    const { id } = req.query;
+    const { name, title, parent_category } = req.body;
 
     const existingCategory = await db("category").where({ id }).first();
     if (!existingCategory) {
@@ -95,14 +105,32 @@ export const updateCategory = async (req, res) => {
         .json({ success: false, message: "Category not found" });
     }
 
-    await db("category").where({ id }).update({
-      name,
-      title,
-      image,
-      parent_category,
-    });
+    let updateData = {};
+    if (name !== undefined) {
+      updateData.name = name;
+      updateData.slug = slugify(name, { lower: true, strict: true });
+    }
+    if (title !== undefined) updateData.title = title;
+    if (parent_category !== undefined)
+      updateData.parent_category = parent_category;
 
-    res.json({ success: true, message: "Category updated successfully" });
+    if (req.files && req.files.length > 0) {
+      updateData.image = JSON.stringify(
+        req.files.map((file) => "/uploads/" + file.filename)
+      );
+    } else if (req.file) {
+      updateData.image = JSON.stringify(["/uploads/" + req.file.filename]);
+    }
+
+    await db("category").where({ id }).update(updateData);
+
+    const updatedCategory = await db("category").where({ id }).first();
+
+    res.json({
+      success: true,
+      message: "Category updated successfully",
+      data: updatedCategory,
+    });
   } catch (error) {
     console.error("Error updating category:", error);
     res.status(500).json({ success: false, message: "Server error" });
