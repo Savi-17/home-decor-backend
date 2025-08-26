@@ -137,14 +137,38 @@ export const updateDiscount = async (req, res) => {
 
 export const discountStatus = async (req, res) => {
     try {
-        const {id } = req.params;
-        const {active_status} = req.body;
+        const { id } = req.params;
+
         const product = await db("products").where({ id }).first();
         if (!product) {
             return res.status(404).json({ success: false, message: "Product not found" });
         }
-        await db("products").where({ id }).update({ active_status });
-        res.json({ success: true, message: "Product status updated successfully" });
+
+        let newStatus = "off";
+
+        if (product.active_status === "on") {
+            if (!product.applied_from_date || !product.applied_to_date) {
+                newStatus = "on";
+            } else {
+                const now = new Date();
+                const fromDate = new Date(product.applied_from_date);
+                const toDate = new Date(product.applied_to_date);
+
+                if (now >= fromDate && now <= toDate) {
+                    newStatus = "on";
+                } else {
+                    newStatus = "off";
+                }
+            }
+        }
+
+        await db("products").where({ id }).update({ active_status: newStatus });
+
+        res.json({
+            success: true,
+            message: `Product status updated successfully`,
+            active_status: newStatus
+        });
     } catch (error) {
         console.error("Error updating discount status:", error);
         res.status(500).json({ success: false, message: "Server error" });

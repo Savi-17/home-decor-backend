@@ -18,11 +18,13 @@ import userRoutes from "./src/routes/userRoutes.js";
 import categoryRoutes from "./src/routes/categoryRoutes.js";
 import productRoutes from "./src/routes/productRoutes.js";
 import stockRoutes from "./src/routes/stockRoutes.js";
+import discountRoutes from "./src/routes/discountRoutes.js";
 
 app.use("/api/customers", userRoutes);
 app.use("/api/category", categoryRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/stock", stockRoutes);
+app.use("/api/discount", discountRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
