@@ -146,7 +146,7 @@ export const discountStatus = async (req, res) => {
         await db("products").where({ id }).update({ active_status });
         res.json({ success: true, message: "Product status updated successfully" });
     } catch (error) {
-        console.error("Error updating product status:", error);
+        console.error("Error updating discount status:", error);
         res.status(500).json({ success: false, message: "Server error" });
     }
 };
