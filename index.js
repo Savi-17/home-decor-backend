@@ -19,12 +19,16 @@ import categoryRoutes from "./src/routes/categoryRoutes.js";
 import productRoutes from "./src/routes/productRoutes.js";
 import stockRoutes from "./src/routes/stockRoutes.js";
 import discountRoutes from "./src/routes/discountRoutes.js";
+import addressRoutes from "./src/routes/addressRoutes.js";
+import wishlistRoutes from "./src/routes/wishlistRoutes.js";
 
 app.use("/api/customers", userRoutes);
 app.use("/api/category", categoryRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/stock", stockRoutes);
 app.use("/api/discount", discountRoutes);
+app.use("/api/address", addressRoutes);
+app.use("/api/wishlist", wishlistRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);

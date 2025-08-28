@@ -104,7 +104,7 @@ export const updateDiscount = async (req, res) => {
       targeted_value 
     } = req.body;
 
-    const discount = await db("discounts").where({ id }).first();
+    const discount = await db("discount").where({ id }).first();
     if (!discount) {
       return res.status(404).json({ success: false, message: "Discount not available" });
     }
@@ -119,9 +119,9 @@ export const updateDiscount = async (req, res) => {
     if (target !== undefined) updateData.target = target;
     if (targeted_value !== undefined) updateData.targeted_value = JSON.stringify(targeted_value);
 
-    await db("discounts").where({ id }).update(updateData);
+    await db("discount").where({ id }).update(updateData);
 
-    const updatedDiscount = await db("discounts").where({ id }).first();
+    const updatedDiscount = await db("discount").where({ id }).first();
 
     res.json({ 
       success: true, 
