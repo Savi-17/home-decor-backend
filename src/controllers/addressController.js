@@ -3,17 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 
 export const createAddress = async (req, res) => {
   try {
-    const { 
-        type, 
-        name, 
-        address,
-        city,
-        state,
-        pincode,
-        country, 
-        phone,
-        isDefault,
-    } = req.body;
+    const { type, name, address,city,state,pincode,country, phone,isDefault } = req.body;
 
     if ( !type || !name || !address || !city || !state || !pincode || !country || !phone ) {
       return res.status(400).json({ success: false, message: "All fields are required" });
@@ -21,32 +11,12 @@ export const createAddress = async (req, res) => {
 
     const uuid = uuidv4();
 
-    const [newAddressId] = await db("address").insert({
-        uuid,
-        type,
-        name,
-        address,
-        city,
-        state,
-        pincode,
-        country,
-        phone,
-        is_default: isDefault || true,
-    });
+    const [newAddressId] = await db("address").insert({ uuid, type, name, address, city, state, pincode, country, phone, is_default: isDefault || true, });
 
-    res.status(201).json({
-      success: true,
-      message: "Address added successfully",
-      id: newAddressId,
-      uuid,
-    });
-
-  } catch (error) {
-    console.error("Error adding Address:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    res.status(201).json({ success: true, message: "Address added successfully", id: newAddressId, uuid, });
+    } catch (error) {
+           console.error("Error adding Address:", error);
+           res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 
