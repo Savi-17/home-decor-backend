@@ -23,6 +23,8 @@ import addressRoutes from "./src/routes/addressRoutes.js";
 import wishlistRoutes from "./src/routes/wishlistRoutes.js";
 import ratingRoutes from "./src/routes/ratingRoutes.js";
 import cartRoutes from "./src/routes/cartRoutes.js";
+import orderRoutes from "./src/routes/orderRoutes.js";
+import orderedItemRoutes from "./src/routes/orderedItemRoutes.js";
 
 app.use("/api/customers", userRoutes);
 app.use("/api/category", categoryRoutes);
@@ -33,6 +35,8 @@ app.use("/api/address", addressRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/rating", ratingRoutes);
 app.use("/api/cart", cartRoutes);
+app.use("/api/order", orderRoutes);
+app.use("/api/orderedItem", orderedItemRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
