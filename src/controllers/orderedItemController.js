@@ -29,30 +29,3 @@ export const listOrderedItems = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
-export const updateOrderedItem = async (req, res) => {
-  try {
-    const { id } = req.query;
-    const { quantity, expected_delivery_date, price, status } = req.body;
-
-    const item = await db("ordered_item").where({ id }).first();
-    if (!item) {
-      return res.status(404).json({ success: false, message: "Order item not found" });
-    }
-
-    await db("ordered_item")
-      .where({ id })
-      .update({
-        quantity,
-        expected_delivery_date,
-        price,
-        status,
-        updated_at: new Date(),
-      });
-
-    res.json({ success: true, message: "Order item updated" });
-  } catch (error) {
-    console.error("Error updating order item:", error);
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
