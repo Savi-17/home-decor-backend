@@ -91,6 +91,29 @@ export const listProducts = async (req, res) => {
     }
 };
 
+export const productsWithFilter = async (req, res) => {
+    try{
+        const filter = req.query.filter;
+        console.log("Filter:", filter);
+        let filterData;
+        if (filter == 'isFeatured') {
+          filterData = { isFeatured: 'on' };
+        }
+        const products = await db("products")
+            .select("*").where(filterData)
+        res.json({
+            success: true,
+            data: products,
+        });
+    } catch (error) {
+        console.error("Error fetching products:", error);
+        res.status(500).json({
+            success: false,
+            message: "Server error while fetching products",
+        });
+    }
+};
+
 export const getProductById = async (req, res) => {
     try {
         const { id } = req.query;

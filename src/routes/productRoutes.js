@@ -1,5 +1,5 @@
 import express from "express";
-import { listProducts, createProduct, getProductById, updateProduct, getProductBySlug, productStatus } from "../controllers/productController.js";
+import { listProducts, createProduct, getProductById, updateProduct, getProductBySlug, productStatus, productsWithFilter } from "../controllers/productController.js";
 import authMiddleware from "../middlewares/authMiddleware.js";
 import { validate } from "../middlewares/validationMiddleware.js";
 import { upload } from "../middlewares/upload.js";
@@ -26,8 +26,9 @@ router.post(
   createProduct
 );
 
-
 router.get("/listProduct", listProducts);
+
+router.get ("/productsWithFilter", productsWithFilter);
 
 router.get("/:id", getProductById);
 
