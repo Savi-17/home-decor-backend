@@ -94,7 +94,6 @@ export const listProducts = async (req, res) => {
 export const productsWithFilter = async (req, res) => {
     try{
         const filter = req.query.filter;
-        console.log("Filter:", filter);
         let filterData;
         if (filter == 'isFeatured') {
           filterData = { isFeatured: 'on' };

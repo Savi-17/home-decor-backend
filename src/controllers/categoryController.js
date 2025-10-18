@@ -32,10 +32,35 @@ export const listCategories = async (req, res) => {
   }
 };
 
+export const productByCategories = async (req, res) => {
+  try {
+    const data = await db("category")
+      .leftJoin('products', 'products.category_id', 'category.id')
+      .select(
+        'category.id',
+        'category.name',
+        'category.image',
+        'products.category_id'
+      )
+      .count('products.id as total_products')
+      .groupBy('category.id', 'category.name', 'category.image', 'products.category_id');
+
+    res.json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while fetching categories",
+    });
+  }
+};
+
 export const createCategory = async (req, res) => {
   try {
-    const { name, title, parent_category } = req.body;
-
+    const { name, title, parent_category, parent_category_id } = req.body;
     if (!name) {
       return res
         .status(400)
@@ -47,9 +72,8 @@ export const createCategory = async (req, res) => {
 
     let imageValue = null;
     if (req.files && req.files.length > 0) {
-      imageValue = JSON.stringify(
-        req.files.map((file) => "/uploads/" + file.filename)
-      );
+      imageValue = JSON.stringify(req.files.map((file) => "/uploads/" + file.filename));
+
     } else if (req.file) {
       imageValue = JSON.stringify(["/uploads/" + req.file.filename]);
     }
@@ -61,6 +85,7 @@ export const createCategory = async (req, res) => {
       title,
       image: imageValue,
       parent_category,
+      parent_category_id,
     });
 
     res.status(201).json({
@@ -71,10 +96,141 @@ export const createCategory = async (req, res) => {
       image: imageValue,
     });
   } catch (error) {
+    if (!req.file) {
+        return res.status(400).json({
+        success: false,
+        message: "Image is required",
+    });
+   }
     console.error("Error creating category:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
+export const getCategoryBySlug = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    let { page = 1, limit = 10 } = req.query;
+
+    page = parseInt(page);
+    limit = parseInt(limit);
+
+    if (isNaN(page) || page < 1) page = 1;
+    if (isNaN(limit) || limit < 1) limit = 10;
+
+    const offset = (page - 1) * limit;
+
+    const categoryData = await db("category")
+      .select("id", "name", "slug", "title as description", "image as banner")
+      .where("slug", slug)
+      .first();
+
+    if (!categoryData) {
+      return res.status(404).json({
+        success: false,
+        message: "Category not found",
+      });
+    }
+
+    const totalProductsResult = await db("products")
+      .count("id as count")
+      .where("category_id", categoryData.id)
+      .first();
+
+    const totalProducts = totalProductsResult?.count || 0;
+    const totalPages = Math.ceil(totalProducts / limit);
+
+    const products = await db("products")
+      .select("id", "name", "price", "image")
+      .where("category_id", categoryData.id)
+      .offset(offset)
+      .limit(limit);
+
+    res.json({
+      success: true,
+      data: {
+        category: categoryData,
+        products,
+        pagination: {
+          totalProducts,
+          totalPages,
+          currentPage: page,
+          limit,
+          hasNextPage: page < totalPages,
+          hasPrevPage: page > 1,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching category with pagination:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+export const categoriesByParentCategoryId = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id) {
+      console.warn("No id provided in req.params:", req.params);
+      return res.status(400).json({ success: false, message: "Missing parent category id" });
+    }
+    const data = await db("category")
+      .where("parent_category_id", id)
+      .select("name", "id", "slug");
+
+    return res.json({ success: true, data });
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error while fetching categories",
+    });
+  }
+};
+
+export const relatedProductBySlug = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    if (!slug) {
+      console.warn("No slug provided in req.params:", req.params);
+      return res.status(400).json({ success: false, message: "Missing product slug" });
+    }
+
+    const product = await db("products")
+      .where("slug", slug)
+      .select("related_products")
+      .first();
+      console.log("Fetched product for related products:", product);
+
+    if (!product || !product.related_products) {
+      return res.json({ success: true, data: [] });
+    }
+
+    const relatedSkus = product.related_products
+      .split(",")
+      .map((sku) => sku.trim())
+      .filter((sku) => sku); 
+
+    const relatedProducts = await db("products")
+      .whereIn("sku", relatedSkus)
+      .select("id", "name", "slug", "sku", "price", "image");
+
+    return res.json({
+      success: true,
+      data: relatedProducts,
+    });
+  } catch (error) {
+    console.error("Error fetching related products:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error while fetching related products",
+    });
+  }
+};
+
 
 export const getCategoryById = async (req, res) => {
   try {
