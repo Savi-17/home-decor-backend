@@ -128,6 +128,45 @@ export const getProductById = async (req, res) => {
     }
 };
 
+export const relatedProductBySlug = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    if (!slug) {
+      console.warn("No slug provided in req.params:", req.params);
+      return res.status(400).json({ success: false, message: "Missing product slug" });
+    }
+
+    const product = await db("products")
+      .where("slug", slug)
+      .select("related_products")
+      .first();
+
+    if (!product || !product.related_products) {
+      return res.json({ success: true, data: [] });
+    }
+    console.log("Fetched product for related products:", product.related_products.products);
+    const relatedSkus = product.related_products.products
+      .map((sku) => sku.trim())
+      .filter((sku) => sku); 
+
+
+    const relatedProducts = await db("products")
+      .whereIn("sku", relatedSkus)
+      .select("*");
+
+    return res.json({
+      success: true,
+      data: relatedProducts,
+    });
+  } catch (error) {
+    console.error("Error fetching related products:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error while fetching related products",
+    });
+  }
+};
+
 export const updateProduct = async (req, res) => {
     try {
     const { id } = req.query;
@@ -209,7 +248,7 @@ export const updateProduct = async (req, res) => {
 
 export const getProductBySlug = async (req, res) => {
     try {
-        const { slug } = req.query;
+        const { slug } = req.params;
         const product = await db("products").where ({ slug }).first();
         if (!product) {
             return res.status(404).json({ success: false, message: "Product not found" });

@@ -1,5 +1,5 @@
 import express from "express";
-import { listProducts, createProduct, getProductById, updateProduct, getProductBySlug, productStatus, productsWithFilter } from "../controllers/productController.js";
+import { listProducts, createProduct, getProductById, updateProduct, getProductBySlug, productStatus, productsWithFilter, relatedProductBySlug } from "../controllers/productController.js";
 import authMiddleware from "../middlewares/authMiddleware.js";
 import { validate } from "../middlewares/validationMiddleware.js";
 import { upload } from "../middlewares/upload.js";
@@ -47,7 +47,9 @@ validate({
     active_status: "required|in:on,off"
   }), updateProduct);
 
-router.get("/slug/:slug", authMiddleware, getProductBySlug);
+router.get("/slug/:slug", getProductBySlug);
+
+router.get("/relatedProductBySlug/:slug", relatedProductBySlug);
 
 router.patch("/:id/status", validate({
     name: "required|string",

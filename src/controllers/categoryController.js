@@ -191,42 +191,21 @@ export const categoriesByParentCategoryId = async (req, res) => {
   }
 };
 
-export const relatedProductBySlug = async (req, res) => {
+export const AllCategory = async (req, res) => {
   try {
-    const { slug } = req.params;
-    if (!slug) {
-      console.warn("No slug provided in req.params:", req.params);
-      return res.status(400).json({ success: false, message: "Missing product slug" });
-    }
-
-    const product = await db("products")
-      .where("slug", slug)
-      .select("related_products")
-      .first();
-      console.log("Fetched product for related products:", product);
-
-    if (!product || !product.related_products) {
-      return res.json({ success: true, data: [] });
-    }
-
-    const relatedSkus = product.related_products
-      .split(",")
-      .map((sku) => sku.trim())
-      .filter((sku) => sku); 
-
-    const relatedProducts = await db("products")
-      .whereIn("sku", relatedSkus)
-      .select("id", "name", "slug", "sku", "price", "image");
-
-    return res.json({
-      success: true,
-      data: relatedProducts,
-    });
+    const data = await db("category").select("id", "slug", "name","parent_category_id", "parent_category").orderBy("parent_category_id", "asc");
+    const final = data.filter((v)=>!v.parent_category_id).map((cat)=>{
+   return{ 
+    ...cat,
+    child:data.filter((x)=>x.parent_category_id==cat.id)
+   }
+})
+    return res.json({ success: true, final });
   } catch (error) {
-    console.error("Error fetching related products:", error);
+    console.error("Error fetching categories:", error);
     return res.status(500).json({
       success: false,
-      message: "Server error while fetching related products",
+      message: "Server error while fetching categories",
     });
   }
 };

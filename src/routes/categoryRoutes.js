@@ -1,5 +1,5 @@
 import express from "express";
-import { listCategories, createCategory, getCategoryById, updateCategory, productByCategories , getCategoryBySlug, categoriesByParentCategoryId, relatedProductBySlug } from "../controllers/categoryController.js";
+import { listCategories, createCategory, getCategoryById, updateCategory, productByCategories , getCategoryBySlug, categoriesByParentCategoryId, AllCategory } from "../controllers/categoryController.js";
 import authMiddleware from "../middlewares/authMiddleware.js";
 import { validate } from "../middlewares/validationMiddleware.js";
 import { upload } from "../middlewares/upload.js";
@@ -9,6 +9,8 @@ const router = express.Router();
 router.get("/listCategory", authMiddleware, listCategories);
 
 router.get("/productByCategories", productByCategories);
+
+router.get("/AllCategory", AllCategory);
 
 router.post(
   "/createCategory",
@@ -25,9 +27,7 @@ router.get("/:id", authMiddleware, getCategoryById);
 
 router.get("/slug/:slug", getCategoryBySlug);
 
-router.get("/ParentCategoryId/:id", categoriesByParentCategoryId);  
-
-router.get("/relatedProductBySlug/:slug", relatedProductBySlug);
+router.get("/ParentCategoryId/:id", categoriesByParentCategoryId); 
 
 router.patch("/:id", authMiddleware, validate({
     name: "required|string",
